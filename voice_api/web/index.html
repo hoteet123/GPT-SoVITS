@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GPT-SoVITS Voice Studio</title>
+    <link rel="stylesheet" href="/web/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Voice Studio</h1>
+        <p id="runtime">연결 확인 중</p>
+      </div>
+      <nav class="tabs" aria-label="views">
+        <button class="tab is-active" data-view="voices" type="button">목소리</button>
+        <button class="tab" data-view="tts" type="button">TTS</button>
+        <button class="tab" data-view="clone" type="button">즉석 생성</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="view is-active" id="view-voices">
+        <div class="grid two">
+          <form class="panel" id="voice-form">
+            <div class="panel-head">
+              <h2>목소리 등록</h2>
+              <button class="icon-button" id="refresh-voices" type="button" title="목록 새로고침">
+                <span aria-hidden="true">↻</span>
+              </button>
+            </div>
+
+            <label>
+              <span>Voice ID</span>
+              <input autocomplete="off" name="voice_id" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}" placeholder="my_voice" required />
+            </label>
+
+            <label>
+              <span>참조 음성</span>
+              <input accept="audio/*" name="reference_audio" required type="file" />
+            </label>
+
+            <label>
+              <span>참조 문장</span>
+              <textarea name="prompt_text" placeholder="음성 파일에서 실제로 말한 문장" required rows="4"></textarea>
+            </label>
+
+            <div class="row">
+              <label>
+                <span>참조 언어</span>
+                <select name="prompt_lang">
+                  <option value="all_ko">all_ko</option>
+                  <option value="ko">ko</option>
+                  <option value="en">en</option>
+                  <option value="ja">ja</option>
+                  <option value="zh">zh</option>
+                </select>
+              </label>
+              <label class="check">
+                <input name="overwrite" type="checkbox" />
+                <span>덮어쓰기</span>
+              </label>
+            </div>
+
+            <label class="check consent">
+              <input name="consent_confirmed" required type="checkbox" />
+              <span>사용 권한 확인</span>
+            </label>
+
+            <button class="primary" type="submit">등록</button>
+            <p class="message" id="voice-message" role="status"></p>
+          </form>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>등록된 목소리</h2>
+              <span class="count" id="voice-count">0</span>
+            </div>
+            <div class="voice-list" id="voice-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-tts">
+        <form class="panel wide" id="tts-form">
+          <div class="panel-head">
+            <h2>TTS 샘플</h2>
+            <button class="secondary" id="save-tts" type="button">저장 생성</button>
+          </div>
+
+          <div class="grid fields">
+            <label>
+              <span>목소리</span>
+              <select id="tts-voice" name="voice_id" required></select>
+            </label>
+            <label>
+              <span>텍스트 언어</span>
+              <select name="text_lang">
+                <option value="ko">ko</option>
+                <option value="all_ko">all_ko</option>
+                <option value="en">en</option>
+                <option value="ja">ja</option>
+                <option value="zh">zh</option>
+              </select>
+            </label>
+            <label>
+              <span>품질</span>
+              <select name="quality_preset">
+                <option value="stable">한국어 안정</option>
+                <option value="natural">자연</option>
+                <option value="expressive" selected>표현</option>
+                <option value="emotional">감정</option>
+              </select>
+            </label>
+            <label>
+              <span>강화</span>
+              <select name="best_of">
+                <option value="4">첫문장 보정</option>
+                <option value="6">강화</option>
+                <option value="8">최대</option>
+                <option value="1">빠르게</option>
+              </select>
+            </label>
+            <label>
+              <span>속도</span>
+              <input inputmode="decimal" name="speed_factor" pattern="[0-9]+([.,][0-9]+)?" type="text" value="1.05" />
+            </label>
+            <label>
+              <span>Seed</span>
+              <input name="seed" step="1" type="number" value="-1" />
+            </label>
+          </div>
+
+          <label>
+            <span>읽을 문장</span>
+            <textarea name="text" placeholder="생성할 문장을 입력하세요." required rows="6">안녕하세요. GPT-SoVITS 목소리 샘플입니다.</textarea>
+          </label>
+
+          <details class="advanced">
+            <summary>샘플링</summary>
+            <div class="grid fields">
+              <label>
+                <span>Top K</span>
+                <input min="1" name="top_k" step="1" type="number" value="16" />
+              </label>
+              <label>
+                <span>Top P</span>
+                <input inputmode="decimal" name="top_p" pattern="[0-9]+([.,][0-9]+)?" type="text" value="0.92" />
+              </label>
+              <label>
+                <span>Temperature</span>
+                <input inputmode="decimal" name="temperature" pattern="[0-9]+([.,][0-9]+)?" type="text" value="0.86" />
+              </label>
+              <label>
+                <span>Repetition</span>
+                <input inputmode="decimal" name="repetition_penalty" pattern="[0-9]+([.,][0-9]+)?" type="text" value="1.12" />
+              </label>
+              <label>
+                <span>파일명</span>
+                <input name="filename" placeholder="sample.wav" />
+              </label>
+            </div>
+          </details>
+
+          <div class="actions">
+            <button class="primary" type="submit">생성</button>
+            <a class="download is-hidden" download="tts.wav" id="tts-download">다운로드</a>
+          </div>
+
+          <audio class="player" controls id="tts-player"></audio>
+          <p class="message" id="tts-message" role="status"></p>
+        </form>
+      </section>
+
+      <section class="view" id="view-clone">
+        <form class="panel wide" id="clone-form">
+          <div class="panel-head">
+            <h2>즉석 생성</h2>
+          </div>
+
+          <div class="grid fields">
+            <label>
+              <span>참조 음성</span>
+              <input accept="audio/*" name="reference_audio" required type="file" />
+            </label>
+            <label>
+              <span>품질</span>
+              <select name="quality_preset">
+                <option value="stable">한국어 안정</option>
+                <option value="natural">자연</option>
+                <option value="expressive" selected>표현</option>
+                <option value="emotional">감정</option>
+              </select>
+            </label>
+            <label>
+              <span>강화</span>
+              <select name="best_of">
+                <option value="4">첫문장 보정</option>
+                <option value="6">강화</option>
+                <option value="8">최대</option>
+                <option value="1">빠르게</option>
+              </select>
+            </label>
+            <label>
+              <span>텍스트 언어</span>
+              <select name="text_lang">
+                <option value="ko">ko</option>
+                <option value="all_ko">all_ko</option>
+                <option value="en">en</option>
+                <option value="ja">ja</option>
+                <option value="zh">zh</option>
+              </select>
+            </label>
+            <label>
+              <span>참조 언어</span>
+              <select name="prompt_lang">
+                <option value="all_ko">all_ko</option>
+                <option value="ko">ko</option>
+                <option value="en">en</option>
+                <option value="ja">ja</option>
+                <option value="zh">zh</option>
+              </select>
+            </label>
+            <label>
+              <span>속도</span>
+              <input inputmode="decimal" name="speed_factor" pattern="[0-9]+([.,][0-9]+)?" type="text" value="1.05" />
+            </label>
+          </div>
+
+          <label>
+            <span>참조 문장</span>
+            <textarea name="prompt_text" placeholder="음성 파일에서 실제로 말한 문장" required rows="3"></textarea>
+          </label>
+
+          <label>
+            <span>읽을 문장</span>
+            <textarea name="text" placeholder="생성할 문장을 입력하세요." required rows="5"></textarea>
+          </label>
+
+          <label class="check consent">
+            <input name="consent_confirmed" required type="checkbox" />
+            <span>사용 권한 확인</span>
+          </label>
+
+          <div class="actions">
+            <button class="primary" type="submit">생성</button>
+            <a class="download is-hidden" download="clone.wav" id="clone-download">다운로드</a>
+          </div>
+
+          <audio class="player" controls id="clone-player"></audio>
+          <p class="message" id="clone-message" role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="/web/app.js" defer></script>
+  </body>
+</html>

@@ -16,6 +16,12 @@ ffprobe*
 cfg.json
 speakers.json
 ref_audios
+voice_api_data/
+pretrained_models.zip
+G2PWModel.zip
+uvr5_weights.zip
+nltk_data.zip
+open_jtalk_dic_utf_8-1.11.tar.gz
 tools/AP_BWE_main/24kto48k/*
 !tools/AP_BWE_main/24kto48k/readme.txt
 
